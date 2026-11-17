@@ -18,7 +18,7 @@ dependencies = [
 html = ["beautifulsoup4>=4.12", "lxml>=5.0"]
 manim = ["manim>=0.18"]
 health = ["google-auth>=2.29", "google-auth-oauthlib>=1.2"]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "pre-commit>=3.0"]
 
 [tool.setuptools.packages.find]
 where = ["."]

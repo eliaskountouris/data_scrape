@@ -39,7 +39,30 @@ directory it was invoked from. `$SCRAPE_BUILD` relocates the root.
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev]'          # add ',manim' for animations, ',html' for scraping HTML
+pre-commit install               # once per clone: secret checks on every commit
 ```
+
+### Keeping keys out of the repo
+
+Credentials (the Google OAuth client and token, the Lichess token) live in
+`~/.config/data_scrape/`, outside the repo, and `.gitignore` blocks
+credential-looking files as a backstop. On top of that, every commit runs:
+- **[gitleaks](https://github.com/gitleaks/gitleaks)**, which knows hundreds
+  of secret formats.
+- **`scripts/check_secrets.py`**, for the formats this toolkit actually uses
+  (Lichess `lip_` tokens; Google `GOCSPX-` client secrets, `ya29.` access
+  tokens and `1//0` refresh tokens; filled-in `client_secret`/`refresh_token`
+  fields) and credential files by name (`*client_secret*`, `*token*.json`,
+  `lichess_token`, `.env`, `*.pem`...).
+- **Private-key and large-file checks.** Data exports belong in `build/`.
+
+A hit blocks the commit and shows only the start of the match, never the whole
+secret. For a false positive, add `# secrets: allow` to the line. Run every
+check by hand with `pre-commit run --all-files`.
+
+GitHub runs the same checks, plus a gitleaks scan of the full history and the
+test suite, on every push (`.github/workflows/checks.yml`). That catches commits
+made with `--no-verify` or from a clone without the hook.
 
 ## Design
 

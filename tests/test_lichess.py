@@ -73,7 +73,7 @@ def test_draws_unplayed_and_analysis():
         game("x", T0, winner=None, status="aborted"),
         game("z", T0, analysis=True),
     ], "me")
-    assert df["result"].tolist()[:2] == ["draw", None]
+    assert df["result"].iloc[0] == "draw" and pd.isna(df["result"].iloc[1])
     z = df.iloc[2]
     assert (z["my_accuracy"], z["opp_accuracy"], z["my_blunders"]) == (91, 74, 2)
     assert pd.isna(df.iloc[0]["my_accuracy"])

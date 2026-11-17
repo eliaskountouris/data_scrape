@@ -220,7 +220,7 @@ def flatten_datapoints(points: Sequence[dict], data_type: str) -> pd.DataFrame:
     df = pd.DataFrame(rows)
     for col in df.columns:
         df[col] = _coerce(df[col])
-    durations = [c for c in df.columns if df[c].dtype == object and _is_duration(df[c])]
+    durations = [c for c in df.columns if _is_text(df[c]) and _is_duration(df[c])]
     for col in durations:
         df[f"{col}_s"] = df.pop(col).str.rstrip("s").astype(float)
     return df
@@ -274,9 +274,15 @@ def _is_duration(s: pd.Series) -> bool:
     return len(vals) > 0 and vals.map(lambda v: isinstance(v, str) and bool(_DURATION.match(v))).all()
 
 
+def _is_text(s: pd.Series) -> bool:
+    """Object or string dtype. pandas 3 stores text as its own ``str`` dtype
+    rather than ``object``, so checking for ``object`` alone misses it."""
+    return pd.api.types.is_object_dtype(s) or pd.api.types.is_string_dtype(s)
+
+
 def _coerce(s: pd.Series) -> pd.Series:
     """The API sends int64s as strings; make all-numeric columns numeric."""
-    if s.dtype != object:
+    if not _is_text(s):
         return s
     vals = s.dropna()
     if len(vals) and vals.map(lambda v: isinstance(v, str)).all():

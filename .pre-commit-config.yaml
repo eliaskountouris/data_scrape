@@ -1,0 +1,33 @@
+# Checks run on every `git commit`. Set up once per clone:
+#
+#   pip install pre-commit && pre-commit install
+#
+# Run them by hand with `pre-commit run --all-files`. The same checks run on
+# GitHub for every push (.github/workflows/checks.yml), so a commit made with
+# --no-verify or on another machine still gets scanned.
+
+repos:
+  # Secrets in hundreds of known formats (cloud keys, OAuth tokens, private keys...).
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  # The credentials this toolkit actually handles (Lichess, Google OAuth), plus
+  # credential files by name. See the script's docstring.
+  - repo: local
+    hooks:
+      - id: check-secrets
+        name: check for this repo's tokens and key files
+        entry: python scripts/check_secrets.py
+        language: system
+        types: [file]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key
+      # personal data exports and parquet caches belong in build/, not git
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-merge-conflict

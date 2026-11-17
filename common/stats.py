@@ -36,7 +36,10 @@ def correlate(df: pd.DataFrame, x: str, y: str) -> Correlation:
     if n < 3:
         return Correlation(float("nan"), float("nan"), float("nan"), n)
     pearson = d[x].corr(d[y])
-    spearman = d[x].corr(d[y], method="spearman")
+    # Spearman is Pearson on average ranks (ties share a rank) -- the same
+    # thing scipy computes, without needing scipy, which pandas' own
+    # method="spearman" quietly imports.
+    spearman = d[x].rank().corr(d[y].rank())
     if abs(spearman) < 1:
         t = spearman * math.sqrt((n - 2) / (1 - spearman**2))
         p = 2 * (1 - 0.5 * (1 + math.erf(abs(t) / math.sqrt(2))))

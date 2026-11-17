@@ -232,7 +232,7 @@ class OpenMeteoDaily(_OpenMeteo):
 
     def _finish(self, df: pd.DataFrame, local) -> None:
         df["date"] = local("time").dt.normalize()
-        df.drop(columns="time", inplace=True)
+        del df["time"]
         for col in ("daylight_h", "sunshine_h"):
             df[col] = df[col] / 3600
         # Polar night/day: open-meteo reports sunrise = sunset = local midnight,
