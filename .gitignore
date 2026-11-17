@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# everything generated -- downloads, parquet, tables, charts, manim media,
+# and the pytest cache (redirected here via pyproject)
+build/
+
+# per-machine Claude Code permissions
+.claude/settings.local.json
+
+# secrets -- never commit keys, tokens or credentials. The toolkit keeps them
+# in ~/.config/data_scrape/ (outside the repo); these rules are a backstop in
+# case one is ever copied in here.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*client_secret*.json
+*credentials*.json
+*token*.json
+*service_account*.json
+secrets/

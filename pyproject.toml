@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-scrape"
+version = "0.1.0"
+description = "A growing toolkit for general data/web scraping and visualization."
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+    "pandas>=2.0",
+    "pyarrow>=14",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+html = ["beautifulsoup4>=4.12", "lxml>=5.0"]
+manim = ["manim>=0.18"]
+health = ["google-auth>=2.29", "google-auth-oauthlib>=1.2"]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["common*", "viz*"]
+
+[tool.pytest.ini_options]
+# Keep pytest's scratch state under the one ignored directory.
+cache_dir = "build/.pytest_cache"
