@@ -35,5 +35,10 @@ Conventions across these projects:
 - **Dating nights:** a night is dated by the morning I woke up. `exercise/`
   shifts it to the day the night started, so a workout lines up with the
   sleep after it.
+- **Time zones:** sleep times are local to wherever you slept (the watch
+  follows your phone), so a trip shows your bedtime in that place's time.
+  `nightly()` also gives UTC times (`bed_time`, `wake_time`) for lining sleep
+  up with other sources, and `utc_offset_h` to spot nights away; `sunrise/`
+  uses it to drop nights in another time zone.
 - **Stage colours:** deep sleep is always purple and REM always light blue
   (`viz.stage_color`).

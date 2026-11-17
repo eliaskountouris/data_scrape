@@ -121,9 +121,15 @@ def sign(fig: plt.Figure, theme: Theme, author: str = AUTHOR,
     """Author and generation date, bottom left, under anything already there
     (the source line, say). :func:`render` calls this for every chart."""
     when = when or dt.date.today()
-    lowest = min((t.get_position()[1] for t in fig.texts), default=0.0)
+    # Measure where existing text actually ends, so a source note that wraps
+    # onto several lines pushes the signature down rather than overlapping it.
+    renderer = fig.canvas.get_renderer()
+    to_fig = fig.transFigure.inverted()
+    bottoms = [t.get_window_extent(renderer).transformed(to_fig).y0 for t in fig.texts]
+    gap = 10 / 72 / fig.get_figheight()           # ~10 pt, in figure fractions
+    top = min(min(bottoms, default=0.0), 0.0) - gap if bottoms else -0.02
     fig.text(
-        0.005, min(lowest, 0.0) - 0.04, f"{author} {when:%Y/%m/%d}",
+        0.005, top, f"{author} {when:%Y/%m/%d}",
         fontsize=8, color=theme.text_muted, va="top", ha="left",
     )
 
@@ -319,6 +325,7 @@ def scatter(
     sizes: Sequence[float] | None = None,
     max_size: float = 320.0,
     trend: bool = False,
+    weights: Sequence[float] | None = None,
 ) -> None:
     """One series of points, with selective direct labels.
 
@@ -327,7 +334,9 @@ def scatter(
     points squared, so a linear scale here is area-proportional and reads
     honestly). ``trend`` draws a least-squares line -- only use it when the
     caller also states the correlation, so a weak relationship isn't dressed up
-    as a strong one.
+    as a strong one. ``weights`` weights the trend line's fit, e.g. by how
+    many observations each point averages, so a point built on one game
+    doesn't count as much as one built on ten.
     """
     color = color or theme.slot(0)
 
@@ -348,7 +357,9 @@ def scatter(
     )
 
     if trend and len(x) > 1:
-        slope, intercept = np.polyfit(np.asarray(x, float), np.asarray(y, float), 1)
+        # polyfit's w multiplies residuals, so sqrt(weight) weights squared error.
+        w = None if weights is None else np.sqrt(np.asarray(weights, float))
+        slope, intercept = np.polyfit(np.asarray(x, float), np.asarray(y, float), 1, w=w)
         xs = np.array([min(x), max(x)])
         ax.plot(
             xs, slope * xs + intercept,

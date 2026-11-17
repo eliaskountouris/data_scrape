@@ -21,6 +21,7 @@ viz/              the visualization library (theme, matplotlib charts, manim)
 projects/         one folder per investigation, grouped by area
   flights/          the weekly flight projects
   sleep/            the sleep projects, sharing shared.py
+  chess/            Lichess projects (games against sleep)
 tests/            unit tests for the logic that fails silently
 build/            everything generated (gitignored)
   cache/            raw downloads + parsed parquet
@@ -67,7 +68,7 @@ them:
 
 **`projects/`** — one folder per investigation, holding the integration script
 that wires `common` and `viz` together plus a writeup of what it found.
-Investigations are grouped by area (`projects/flights/`, `projects/sleep/`),
+Investigations are grouped by area (`projects/flights/`, `projects/sleep/`, `projects/chess/`),
 and `build/` mirrors the same layout. Glue shared by one area's scripts lives
 in that area's `shared.py`; anything reusable beyond the area gets promoted
 into `common/` or `viz/`.
@@ -84,7 +85,7 @@ Each is a plain function or class that takes and returns DataFrames.
 | `common.weather.OpenMeteoDaily().load_range(loc, start, end)` | daily weather, sunrise, sunset, day length for any coordinate |
 | `common.weather.OpenMeteoHourly().load_range(loc, start, end)` | hourly weather with an `is_day` flag |
 | `common.health.GoogleHealth().load_range(type, start, end)` | any Google Health data type (`steps`, `sleep`, `heart-rate`...) |
-| `common.health.nightly(sleep)` | one row per night: bed/wake time, minutes in each stage |
+| `common.health.nightly(sleep)` | one row per night: bed/wake time (local and UTC), minutes in each stage |
 | `common.health.stage_table(sleep)` / `stage_segments(sleep, "deep")` | every stage stretch, or just one stage's |
 | `common.health.daily_exercise(exercise, start, end)` / `exercise_bouts(exercise)` | exercise minutes per day, or each distinct workout, with double-recorded sessions merged |
 | `common.lichess.Lichess().load_games(start, end, user=None)` | every game a player started in the range, from their side of the board (result, ratings, opening, moves, clocks, accuracy) |
@@ -359,3 +360,9 @@ loading), and the flight weeks share `common.flights`.
 | [`sunrise`](projects/sleep/sunrise/) | Does sunrise change my deep and REM sleep? Sleep stages against San Francisco sunrise, plus an average-night model of each stage. |
 | [`exercise`](projects/sleep/exercise/) | Does exercise change that night's deep and REM sleep? |
 | [`average_bedtime`](projects/sleep/average_bedtime/) | Deep and REM timelines against my average bedtime and wake-up time, over 14 days or a range of windows. |
+
+### [`chess/`](projects/chess/)
+
+| | |
+|---|---|
+| [`sleep`](projects/chess/sleep/) | Do I win more after a longer night? Lichess win rate against hours asleep the night before, and against hours since waking, with late-night games matched to the right night. |

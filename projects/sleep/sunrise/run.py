@@ -45,9 +45,26 @@ DRIVERS = {
 }
 
 
+def away_from(nights: pd.DataFrame, tz: str) -> pd.Series:
+    """True for nights the watch spent on a different UTC offset from ``tz``
+    (the sunrise location's zone) -- i.e. you were travelling, so that
+    location's sunrise isn't the one you slept under. Trips within the same
+    time zone can't be detected this way."""
+    home = nights["wake_time"].dt.tz_convert(tz)
+    home_h = home.map(lambda t: t.utcoffset().total_seconds() / 3600)
+    return nights["utc_offset_h"].ne(home_h)
+
+
 def build_nights(sleep: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFrame:
+    """One row per night at the sunrise location, with that morning's weather.
+    Nights spent in another time zone are dropped (see :func:`away_from`);
+    how many is in ``attrs["away"]``."""
     nights = nightly(sleep)
+    away = away_from(nights, weather["timezone"].iloc[0]) if len(weather) else None
+    if away is not None:
+        nights = nights.loc[~away]
     joined = nights.merge(weather, left_on="night", right_on="date", how="inner")
+    joined.attrs["away"] = int(away.sum()) if away is not None else 0
     joined["sunrise_hour"] = charts.hours_since(joined["sunrise"], joined["night"])
     joined["bed_hour"] = charts.hours_since(joined["bed_local"], joined["night"])
     joined["wake_after_sunrise_min"] = (
@@ -162,6 +179,9 @@ def main() -> None:
     first, last = nights["night"].min().date(), nights["night"].max().date()
     print(f"\n=== Sleep vs sunrise, {where.label}, {first} – {last} ===")
     print(f"nights           {len(nights)} ({nights['deep_min'].notna().sum()} with sleep stages)")
+    if nights.attrs.get("away"):
+        print(f"                 {nights.attrs['away']} more left out: spent in another time zone, "
+              f"so {where.label}'s sunrise doesn't apply")
     print(f"sunrise range    {nights['sunrise'].dt.strftime('%H:%M').min()} – "
           f"{nights['sunrise'].dt.strftime('%H:%M').max()}")
 

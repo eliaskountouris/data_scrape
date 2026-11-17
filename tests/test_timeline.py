@@ -54,6 +54,14 @@ def test_nightly_reads_stage_minutes():
     assert abs(n["deep_share"] - 45 / 420) < 1e-9
 
 
+def test_nightly_has_local_and_utc_times():
+    n = nightly(flatten_datapoints(SLEEP, "sleep")).iloc[0]
+    assert n["wake_local"] == pd.Timestamp("2026-11-16 07:00")          # PST wall clock
+    assert n["wake_time"] == pd.Timestamp("2026-11-16 15:00", tz="UTC")
+    assert n["bed_time"] == pd.Timestamp("2026-11-16 07:30", tz="UTC")
+    assert n["utc_offset_h"] == -8
+
+
 def test_hours_since_keeps_pre_midnight_negative():
     h = hours_since(pd.Series([pd.Timestamp("2026-11-15 23:30")]),
                     pd.Series([pd.Timestamp("2026-11-16")]))

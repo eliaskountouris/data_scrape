@@ -78,8 +78,16 @@ def nightly(sleep: pd.DataFrame) -> pd.DataFrame:
     ``<stage>_share`` is that stage's fraction of time asleep;
     nights recorded without stages (``type == "CLASSIC"``, e.g. the band was
     loose) have NaN for them rather than zero, so they can't drag averages down.
+
+    ``bed_local``/``wake_local`` are wall-clock times wherever you slept (the
+    watch follows your phone's time zone, so they jump when you travel).
+    ``bed_time``/``wake_time`` are the same instants in UTC: use those to line
+    sleep up with another source's timestamps. ``utc_offset_h`` is the offset
+    the watch was on when you woke (-8 in PST, -5 in New York), so a night away
+    from home's time zone shows up as a different value.
     """
-    cols = ["night", "bed_local", "wake_local", "asleep_min",
+    cols = ["night", "bed_local", "wake_local", "bed_time", "wake_time", "utc_offset_h",
+            "asleep_min",
             *(f"{s}_min" for s in STAGES), *(f"{s}_share" for s in SLEEPING)]
     if sleep.empty:
         return pd.DataFrame(columns=cols)
@@ -91,6 +99,10 @@ def nightly(sleep: pd.DataFrame) -> pd.DataFrame:
         "night": df["end_local"].dt.normalize(),
         "bed_local": df["start_local"],
         "wake_local": df["end_local"],
+        "bed_time": df["start_time"],
+        "wake_time": df["end_time"],
+        "utc_offset_h": (df["end_local"] - df["end_time"].dt.tz_localize(None))
+        / pd.Timedelta(hours=1),
         "asleep_min": df["summary_minutes_asleep"].astype(float),
     })
     for stage in STAGES:

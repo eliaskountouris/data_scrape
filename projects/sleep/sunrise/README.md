@@ -79,8 +79,11 @@ stage's correlations with every driver above, and the model scores.
 - **Daylight saving time jumps sunrise by an hour overnight** (Nov 1 2026, for
   example) while the light itself barely changes. `daylight_h` doesn't have
   that jump, so compare the two.
-- **One person, one location.** If you travelled, those nights get the wrong
-  sunrise. Trim the date range around trips.
+- **One location.** Nights the watch spent in a different time zone from
+  `--lat/--lon` (a trip east, say) are detected and left out, since that
+  location's sunrise wasn't the one you slept under; the script prints how
+  many. Trips within the same time zone can't be detected that way, so trim
+  the date range around those.
 - **Fitbit's stages are estimates** from heart rate and movement, not EEG.
   They're useful for trends within one person and unreliable as absolute
   numbers.
