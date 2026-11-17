@@ -16,6 +16,7 @@ common/           the scraping library
   flights/          flight data behind one interface (see below)
   weather/          weather + sunrise/sunset for any coordinate (Open-Meteo)
   health/           your own Google Health data (OAuth), sleep helpers, stage model
+  lichess/          a player's Lichess games and rating history
 viz/              the visualization library (theme, matplotlib charts, manim)
 projects/         one folder per investigation, grouped by area
   flights/          the weekly flight projects
@@ -86,6 +87,8 @@ Each is a plain function or class that takes and returns DataFrames.
 | `common.health.nightly(sleep)` | one row per night: bed/wake time, minutes in each stage |
 | `common.health.stage_table(sleep)` / `stage_segments(sleep, "deep")` | every stage stretch, or just one stage's |
 | `common.health.daily_exercise(exercise, start, end)` / `exercise_bouts(exercise)` | exercise minutes per day, or each distinct workout, with double-recorded sessions merged |
+| `common.lichess.Lichess().load_games(start, end, user=None)` | every game a player started in the range, from their side of the board (result, ratings, opening, moves, clocks, accuracy) |
+| `common.lichess.Lichess().rating_history(user=None)` | one row per day a rating changed, per time control |
 | `common.health.StageModel("deep").fit(sleep)` | average-night model of any stage: `predict_proba`, `windows`, `missed`, cross-validated `evaluate` |
 | `common.flights.FlightData()` / `FareData()` | US flight on-time and fare records |
 | `common.stats.correlate(df, x, y)` | Pearson, Spearman, p-value and n in one result |
@@ -130,7 +133,8 @@ render(draw, "rem-timeline")
 
 There are also command-line tools for quick pulls:
 `python -m common.weather daily <lat> <lon> <start> <end> [--csv out.csv]` and
-`python -m common.health pull <type> <start> <end>`.
+`python -m common.health pull <type> <start> <end>` and
+`python -m common.lichess games <start> <end> [--user name]`.
 
 ## Adding a source
 
@@ -219,6 +223,38 @@ interval types (steps, sleep) get `start_time`/`end_time` in UTC plus
 and nested lists such as sleep stages are kept as JSON strings. Data is cached
 by month under `build/cache/google_health/`. The current month is re-fetched
 for 3 days after it ends, to pick up late device syncs.
+
+## Lichess
+
+`common.lichess.Lichess` reads a player's games from the
+[Lichess API](https://lichess.org/api). Games are public, so it works without a
+token for any username. With your own token it also knows who "you" are (so
+`user` can be left out), exports your games about three times faster and
+includes computer-analysis accuracy.
+
+1. Create a token at https://lichess.org/account/oauth/token. It needs no scopes.
+2. Save it, outside the repo:
+   `install -m 600 /dev/stdin ~/.config/data_scrape/lichess_token`, paste it,
+   then Ctrl-D. Or set `$LICHESS_TOKEN`.
+
+```python
+from common.lichess import Lichess, local_time
+
+li = Lichess()
+games = li.load_games("2026-01-01", "2026-03-31")             # your games
+games["hour"] = local_time(games["played_at"], "America/Los_Angeles").dt.hour
+ratings = li.rating_history()                                  # date, perf, rating
+```
+
+Each game row is seen from the player's side: `color`, `result`
+(win/loss/draw) and `my_*`/`opp_*` columns for name, rating, rating change and,
+for analysed games, accuracy, average centipawn loss and mistake counts. It
+also carries the time control, opening (ECO, name), the moves in SAN, clock
+times per ply (JSON) and the full PGN. Aborted games are dropped unless you pass
+`include_unplayed=True`.
+
+Times are UTC, and months are UTC months. Finished months are cached for good
+under `build/cache/lichess/`; the current month is re-fetched on every load.
 
 ## Getting flight data
 
